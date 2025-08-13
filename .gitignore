@@ -1,0 +1,52 @@
+## Build e artefatos
+bin/
+obj/
+out/
+*.exe
+*.dll
+*.log
+
+## Configurações locais de IDE
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Cache e temporários
+*.pidb
+*.svclog
+*.dbmdl
+*.pdb
+*.cache
+*.tmp
+
+## Arquivos do Visual Studio / Rider
+.vs/
+*.ncrunch*
+*.localhistory/
+
+## Logs
+logs/
+*.log
+*.tlog
+
+## Arquivos do sistema
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## Segredos / Configs sensíveis
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+## Test results
+TestResults/
+*.coverage
+*.coveragexml
+
+## Docker
+docker-compose.override.yml
+.env
