@@ -6,6 +6,7 @@ using BaitaHora.Application.IServices;
 using BaitaHora.Application.IServices.Auth;
 using BaitaHora.Application.IServices.Auths;
 using BaitaHora.Application.IServices.IAuth;
+using BaitaHora.Application.IServices.Scheduling;
 using BaitaHora.Domain.Commons;
 using BaitaHora.Domain.Entities;
 using BaitaHora.Domain.Enums;
@@ -23,6 +24,7 @@ namespace BaitaHora.Application.Services.Auths
         private readonly IPasswordManager _passwordManager;
         private readonly ITokenService _tokenService;
         private readonly IAccessService _accessService;
+        private readonly IScheduleService _scheduleService;
         private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
         private readonly ILogger<AuthService> _logger;
@@ -34,6 +36,7 @@ namespace BaitaHora.Application.Services.Auths
             IPasswordManager passwordManager,
             ITokenService tokenService,
             IAccessService accessService,
+            IScheduleService scheduleService,
             IUnitOfWork uow,
             IMapper mapper,
             ILogger<AuthService> logger)
@@ -44,6 +47,7 @@ namespace BaitaHora.Application.Services.Auths
             _passwordManager = passwordManager ?? throw new ArgumentNullException(nameof(passwordManager));
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
             _accessService = accessService ?? throw new ArgumentNullException(nameof(accessService));
+            _scheduleService = scheduleService ?? throw new ArgumentNullException(nameof(scheduleService));
             _uow = uow ?? throw new ArgumentNullException(nameof(uow));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -99,6 +103,8 @@ namespace BaitaHora.Application.Services.Auths
 
                 await _companyMemberRepository.AddAsync(member);
 
+                await _scheduleService.EnsureScheduleAsync(user.Id, company.Id);
+
                 await _uow.CommitAsync();
 
                 var response = _mapper.Map<UserResponse>(user);
@@ -152,6 +158,8 @@ namespace BaitaHora.Application.Services.Auths
                 var member = new CompanyMember(request.CompanyId, user.Id, request.Role, joinedAt: DateTime.UtcNow, true);
                 await _companyMemberRepository.AddAsync(member);
 
+                await _scheduleService.EnsureScheduleAsync(user.Id, request.CompanyId);
+
                 var response = _mapper.Map<UserResponse>(user);
                 return Result<UserResponse>.Success(response);
             }
@@ -187,7 +195,7 @@ namespace BaitaHora.Application.Services.Auths
                 return Result<string>.Failure("Erro interno ao autenticar usuário.");
             }
         }
-        
+
         private async Task<string> GenerateUsernameIfEmptyAsync(string? username)
         {
             if (!string.IsNullOrWhiteSpace(username))
