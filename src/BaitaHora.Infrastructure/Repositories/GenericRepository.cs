@@ -6,39 +6,41 @@ namespace BaitaHora.Infrastructure.Repositories
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
-        protected readonly AppDbContext _context;
+        protected readonly AppDbContext _ctx;
+        protected readonly DbSet<T> _set;
 
-        public GenericRepository(AppDbContext context)
+        public GenericRepository(AppDbContext ctx)
         {
-            _context = context;
+            _ctx = ctx ?? throw new ArgumentNullException(nameof(ctx));
+            _set = _ctx.Set<T>();
         }
 
-        public async Task<T?> GetByIdAsync(Guid id)
+        public Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => _set.FindAsync([id], ct).AsTask();
+
+        public async Task AddAsync(T entity, CancellationToken ct = default)
         {
-            return await _context.Set<T>().FindAsync(id);
+            if (entity is null) throw new ArgumentNullException(nameof(entity));
+            await _set.AddAsync(entity, ct);
         }
 
-        public async Task AddAsync(T entity)
+        public Task UpdateAsync(T entity, CancellationToken ct = default)
         {
-            await _context.Set<T>().AddAsync(entity);
-            await _context.SaveChangesAsync();
+            if (entity is null) throw new ArgumentNullException(nameof(entity));
+            _set.Update(entity);
+            return Task.CompletedTask;
         }
 
-        public async Task UpdateAsync(T entity)
+        public Task DeleteAsync(T entity, CancellationToken ct = default)
         {
-            _context.Set<T>().Update(entity);
-            await _context.SaveChangesAsync();
+            if (entity is null) throw new ArgumentNullException(nameof(entity));
+            _set.Remove(entity);
+            return Task.CompletedTask;
         }
 
-        public async Task DeleteAsync(T entity)
+        public async Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default)
         {
-            _context.Set<T>().Remove(entity);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<IEnumerable<T>> GetAllAsync()
-        {
-            return await _context.Set<T>().ToListAsync();
+            return await _set.AsNoTracking().ToListAsync(ct);
         }
     }
 }

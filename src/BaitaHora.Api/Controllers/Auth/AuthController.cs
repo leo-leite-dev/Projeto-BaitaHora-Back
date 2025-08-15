@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BaitaHora.Api.Helpers;
 using BaitaHora.Application.DTOs.Requests.Auth;
-using BaitaHora.Application.IServices.IAuth;
 using BaitaHora.Application.IServices.Auth;
+using BaitaHora.Application.IServices.Auths;
 
 namespace BaitaHora.Api.Controllers.Auth
 {
@@ -91,8 +91,13 @@ namespace BaitaHora.Api.Controllers.Auth
 
             _cookieService.SetJwtCookie(Response, result.Value, TimeSpan.FromHours(1));
 
-            return Ok(new { authenticated = true });
+            return Ok(new
+            {
+                authenticated = true,
+                token = result.Value
+            });
         }
+
 
         [HttpPost("logout")]
         public IActionResult Logout()

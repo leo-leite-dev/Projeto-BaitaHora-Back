@@ -78,7 +78,7 @@ namespace BaitaHora.Api.Controllers.Scheduling
         {
             try
             {
-                await _appointmentService.AssignCustomerAsync(appointmentId, request.CustomerUserId, ct);
+                await _appointmentService.AssignCustomerAsync(appointmentId, request.CustomerId, ct);
                 return NoContent();
             }
             catch (KeyNotFoundException knf)
@@ -87,7 +87,7 @@ namespace BaitaHora.Api.Controllers.Scheduling
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao atribuir cliente {CustomerUserId} ao agendamento {AppointmentId}", request.CustomerUserId, appointmentId);
+                _logger.LogError(ex, "Erro ao atribuir cliente {CustomerId} ao agendamento {AppointmentId}", request.CustomerId, appointmentId);
                 return ApiResponseHelper.CreateError("Erro no servidor", "Tente novamente mais tarde", 500);
             }
         }

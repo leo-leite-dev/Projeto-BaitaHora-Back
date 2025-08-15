@@ -4,7 +4,7 @@ namespace BaitaHora.Application.IRepositories
 {
     public interface ICompanyRepository : IGenericRepository<Company>
     {
-        Task<bool> ExistsByNameAsync(string name);
+        Task<bool> ExistsByNameAsync(string name, CancellationToken ct = default);
         Task<bool> ExistsByDocumentAsync(string document);
         Task AddImageAsync(CompanyImage image);
     }

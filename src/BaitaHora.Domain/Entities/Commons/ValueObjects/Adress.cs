@@ -1,6 +1,6 @@
 using BaitaHora.Domain.Exceptions;
 
-namespace BaitaHora.Domain.Entities.Users
+namespace BaitaHora.Domain.Entities.Commons.ValueObjects
 {
     public class Address
     {

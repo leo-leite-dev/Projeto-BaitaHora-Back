@@ -17,20 +17,35 @@ namespace BaitaHora.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Document = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    Document = table.Column<string>(type: "character varying(18)", maxLength: 18, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     Address_Street = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Address_Number = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Address_Complement = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Address_Neighborhood = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Address_City = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Address_State = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
+                    Address_State = table.Column<string>(type: "char(2)", maxLength: 2, nullable: false),
                     Address_ZipCode = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Companies", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "customers",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    PhoneE164 = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Name = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_customers", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -50,7 +65,8 @@ namespace BaitaHora.Infrastructure.Migrations
                     Address_City = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Address_State = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
                     Address_ZipCode = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: false),
-                    ProfileImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
+                    ProfileImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -78,6 +94,27 @@ namespace BaitaHora.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CompanyPositions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: false),
+                    AccessLevel = table.Column<short>(type: "smallint", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CompanyPositions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CompanyPositions_Companies_CompanyId",
+                        column: x => x.CompanyId,
+                        principalTable: "Companies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "service_catalog_items",
                 columns: table => new
                 {
@@ -100,6 +137,35 @@ namespace BaitaHora.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "company_customers",
+                columns: table => new
+                {
+                    CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CustomerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PreferredProfessionalUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastServiceId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastProfessionalUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastVisitAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_company_customers", x => new { x.CompanyId, x.CustomerId });
+                    table.ForeignKey(
+                        name: "FK_company_customers_Companies_CompanyId",
+                        column: x => x.CompanyId,
+                        principalTable: "Companies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_company_customers_customers_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "customers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -112,7 +178,8 @@ namespace BaitaHora.Infrastructure.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     PasswordResetToken = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     PasswordResetTokenExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ProfileId = table.Column<Guid>(type: "uuid", nullable: false)
+                    ProfileId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -126,12 +193,48 @@ namespace BaitaHora.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "company_customer_professionals",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CustomerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProfessionalUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsPrimary = table.Column<bool>(type: "boolean", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW() AT TIME ZONE 'UTC'")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_company_customer_professionals", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_company_customer_professionals_Companies_CompanyId",
+                        column: x => x.CompanyId,
+                        principalTable: "Companies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_company_customer_professionals_Users_ProfessionalUserId",
+                        column: x => x.ProfessionalUserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_company_customer_professionals_customers_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "customers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CompanyMembers",
                 columns: table => new
                 {
                     CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Role = table.Column<int>(type: "integer", nullable: false),
+                    PrimaryPositionId = table.Column<Guid>(type: "uuid", nullable: true),
                     JoinedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
@@ -144,6 +247,12 @@ namespace BaitaHora.Infrastructure.Migrations
                         principalTable: "Companies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CompanyMembers_CompanyPositions_PrimaryPositionId",
+                        column: x => x.PrimaryPositionId,
+                        principalTable: "CompanyPositions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_CompanyMembers_Users_UserId",
                         column: x => x.UserId,
@@ -188,7 +297,7 @@ namespace BaitaHora.Infrastructure.Migrations
                     StartsAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndsAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
-                    CustomerUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CustomerId = table.Column<Guid>(type: "uuid", nullable: true),
                     CustomerDisplayName = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
                     CustomerPhone = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: true),
                     ServiceId = table.Column<Guid>(type: "uuid", nullable: true),
@@ -200,9 +309,9 @@ namespace BaitaHora.Infrastructure.Migrations
                     table.PrimaryKey("PK_appointments", x => x.Id);
                     table.CheckConstraint("CK_appointments_time_range", "\"EndsAtUtc\" > \"StartsAtUtc\"");
                     table.ForeignKey(
-                        name: "FK_appointments_Users_CustomerUserId",
-                        column: x => x.CustomerUserId,
-                        principalTable: "Users",
+                        name: "FK_appointments_customers_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "customers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
@@ -214,9 +323,9 @@ namespace BaitaHora.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_appointments_CustomerUserId",
+                name: "IX_appointments_CustomerId",
                 table: "appointments",
-                column: "CustomerUserId");
+                column: "CustomerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_appointments_ScheduleId_StartsAtUtc",
@@ -234,6 +343,59 @@ namespace BaitaHora.Infrastructure.Migrations
                 column: "Status");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Companies_Document",
+                table: "Companies",
+                column: "Document",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Companies_Name",
+                table: "Companies",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_company_customer_professionals_CompanyId_CustomerId_IsPrima~",
+                table: "company_customer_professionals",
+                columns: new[] { "CompanyId", "CustomerId", "IsPrimary" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_company_customer_professionals_CompanyId_CustomerId_Profess~",
+                table: "company_customer_professionals",
+                columns: new[] { "CompanyId", "CustomerId", "ProfessionalUserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_company_customer_professionals_CustomerId",
+                table: "company_customer_professionals",
+                column: "CustomerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_company_customer_professionals_ProfessionalUserId",
+                table: "company_customer_professionals",
+                column: "ProfessionalUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_company_customers_CustomerId",
+                table: "company_customers",
+                column: "CustomerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_company_customers_IsActive",
+                table: "company_customers",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_company_customers_LastVisitAtUtc",
+                table: "company_customers",
+                column: "LastVisitAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_company_customers_PreferredProfessionalUserId",
+                table: "company_customers",
+                column: "PreferredProfessionalUserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CompanyImages_CompanyId",
                 table: "CompanyImages",
                 column: "CompanyId",
@@ -245,9 +407,25 @@ namespace BaitaHora.Infrastructure.Migrations
                 columns: new[] { "CompanyId", "UserId", "IsActive" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CompanyMembers_PrimaryPositionId",
+                table: "CompanyMembers",
+                column: "PrimaryPositionId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CompanyMembers_UserId",
                 table: "CompanyMembers",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CompanyPositions_CompanyId",
+                table: "CompanyPositions",
+                column: "CompanyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_customers_PhoneE164",
+                table: "customers",
+                column: "PhoneE164",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_schedules_CompanyId",
@@ -280,6 +458,12 @@ namespace BaitaHora.Infrastructure.Migrations
                 name: "appointments");
 
             migrationBuilder.DropTable(
+                name: "company_customer_professionals");
+
+            migrationBuilder.DropTable(
+                name: "company_customers");
+
+            migrationBuilder.DropTable(
                 name: "CompanyImages");
 
             migrationBuilder.DropTable(
@@ -292,10 +476,16 @@ namespace BaitaHora.Infrastructure.Migrations
                 name: "schedules");
 
             migrationBuilder.DropTable(
-                name: "Companies");
+                name: "customers");
+
+            migrationBuilder.DropTable(
+                name: "CompanyPositions");
 
             migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Companies");
 
             migrationBuilder.DropTable(
                 name: "UserProfiles");

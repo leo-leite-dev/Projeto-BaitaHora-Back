@@ -113,6 +113,22 @@ public class PasswordService : IPasswordService
         }
     }
 
+    public string HashPassword(string rawPassword)
+    {
+        if (string.IsNullOrWhiteSpace(rawPassword))
+            throw new ArgumentException("A senha não pode ser nula ou vazia.", nameof(rawPassword));
+
+        return _passwordManager.Hash(rawPassword);
+    }
+
+    public bool VerifyHashedPassword(string hashedPassword, string providedPassword)
+    {
+        if (string.IsNullOrWhiteSpace(hashedPassword) || string.IsNullOrWhiteSpace(providedPassword))
+            return false;
+
+        return _passwordManager.Verify(providedPassword, hashedPassword);
+    }
+
     private async Task<User?> GetUserByIdentifierAsync(string identifier)
     {
         return identifier.Contains("@")

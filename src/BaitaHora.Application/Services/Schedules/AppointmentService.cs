@@ -61,17 +61,17 @@ namespace BaitaHora.Application.Services.Scheduling
 
             var appt = new Appointment(request.ScheduleId, request.StartsAtUtc, request.EndsAtUtc, createdBy, request.ServiceId, request.Notes, request.CustomerDisplayName, request.CustomerPhone);
 
-            if (request.CustomerUserId.HasValue)
-                appt.AssignCustomer(request.CustomerUserId.Value);
+            if (request.CustomerId.HasValue)
+                appt.AssignCustomer(request.CustomerId.Value);
 
             await _appointments.AddAsync(appt);
             return _mapper.Map<AppointmentResponse>(appt);
         }
 
-        public async Task AssignCustomerAsync(Guid appointmentId, Guid customerUserId, CancellationToken ct = default)
+        public async Task AssignCustomerAsync(Guid appointmentId, Guid customerId, CancellationToken ct = default)
         {
             var appt = await _appointments.GetByIdAsync(appointmentId) ?? throw new KeyNotFoundException("Agendamento não encontrado.");
-            appt.AssignCustomer(customerUserId);
+            appt.AssignCustomer(customerId);
             await _appointments.UpdateAsync(appt);
         }
 

@@ -8,5 +8,8 @@ namespace BaitaHora.Application.IServices
         Task<Result<string>> ChangePasswordAsync(ChangePasswordRequest request);
         Task<Result<string>> GeneratePasswordResetTokenAsync(string email);
         Task<Result<string>> ResetPasswordWithTokenAsync(ResetPasswordRequest request);
+
+        string HashPassword(string rawPassword);
+        bool VerifyHashedPassword(string hashedPassword, string providedPassword);
     }
 }

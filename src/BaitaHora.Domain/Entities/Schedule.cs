@@ -1,12 +1,12 @@
+using BaitaHora.Domain.Entities.Commons;
+
 namespace BaitaHora.Domain.Entities
 {
-    public class Schedule
+    public class Schedule : Base
     {
-        public Guid Id { get; private set; } = Guid.NewGuid();
         public Guid UserId { get; private set; }
         public Guid CompanyId { get; private set; }
         public bool IsActive { get; private set; } = true;
-        public DateTime CreatedAtUtc { get; private set; } = DateTime.UtcNow;
 
         public User User { get; private set; } = null!;
         public Company Company { get; private set; } = null!;

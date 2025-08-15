@@ -32,7 +32,7 @@ namespace BaitaHora.Domain.Entities
 
             Initialize(email, username);
         }
-        
+
         private void Initialize(string email, string? username)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -44,6 +44,23 @@ namespace BaitaHora.Domain.Entities
 
             if (!string.IsNullOrWhiteSpace(username))
                 SetUsername(username, _ => false);
+        }
+
+        public void SetEmail(string newEmail, Func<string, bool> isEmailTaken)
+        {
+            if (string.IsNullOrWhiteSpace(newEmail))
+                throw new UserException("O e-mail é obrigatório.");
+
+            var normalized = EmailValidator.EnsureValid(newEmail.Trim());
+
+            if (string.Equals(Email, normalized, StringComparison.OrdinalIgnoreCase))
+                return; 
+
+            if (isEmailTaken.Invoke(normalized))
+                throw new UserException("E-mail já está em uso.");
+
+            Email = normalized;
+            UpdatedAt = DateTime.UtcNow;
         }
 
         public void SetUsername(string newUsername, Func<string, bool> isUsernameTaken)

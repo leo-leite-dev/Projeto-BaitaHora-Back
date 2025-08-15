@@ -7,8 +7,8 @@ namespace BaitaHora.Application.Validators.Scheduling
     {
         public AssignCustomerRequestValidator()
         {
-            RuleFor(x => x.CustomerUserId)
-                .NotEmpty().WithMessage("CustomerUserId é obrigatório.");
+            RuleFor(x => x.CustomerId)
+                .NotEmpty().WithMessage("CustomerId é obrigatório.");
         }
     }
 }

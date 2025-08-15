@@ -7,5 +7,6 @@ namespace BaitaHora.Application.DTOs.Requests.Company
         public string? ImageUrl { get; init; }
 
         public AddressRequest Address { get; init; } = new();
+        public IReadOnlyCollection<CompanyPositionRequest>? Positions { get; init; }
     }
 }

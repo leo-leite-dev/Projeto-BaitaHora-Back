@@ -2,11 +2,10 @@ namespace BaitaHora.Application.IRepositories
 {
     public interface IGenericRepository<T> where T : class
     {
-        Task<T?> GetByIdAsync(Guid id);
-        Task AddAsync(T entity);
-        Task UpdateAsync(T entity);
-        Task DeleteAsync(T entity);
-        Task<IEnumerable<T>> GetAllAsync();
+        Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default);
+        Task AddAsync(T entity, CancellationToken ct = default);
+        Task UpdateAsync(T entity, CancellationToken ct = default);
+        Task DeleteAsync(T entity, CancellationToken ct = default);
+        Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default);
     }
-
 }

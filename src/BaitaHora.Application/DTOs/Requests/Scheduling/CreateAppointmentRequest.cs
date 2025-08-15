@@ -7,7 +7,7 @@ namespace BaitaHora.Application.DTOs.Requests.Scheduling
         public DateTime EndsAtUtc { get; init; }
         public Guid? ServiceId { get; init; }
         public string? Notes { get; init; }
-        public Guid? CustomerUserId { get; init; }
+        public Guid? CustomerId { get; init; }
         public string? CustomerDisplayName { get; init; }
         public string? CustomerPhone { get; init; }
         public string CreatedBy { get; init; } = "Staff";

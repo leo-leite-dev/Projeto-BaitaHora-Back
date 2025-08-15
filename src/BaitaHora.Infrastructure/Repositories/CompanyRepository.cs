@@ -14,7 +14,7 @@ namespace BaitaHora.Infrastructure.Repositories
             _context = context;
         }
 
-        public Task<bool> ExistsByNameAsync(string name)
+        public Task<bool> ExistsByNameAsync(string name, CancellationToken ct = default)
         {
             var norm = name.Trim().ToLower();
             return _context.Companies.AnyAsync(c => c.Name.ToLower() == norm);
