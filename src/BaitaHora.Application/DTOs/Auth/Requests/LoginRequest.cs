@@ -1,4 +1,4 @@
-namespace BaitaHora.Application.DTOs.Requests.Auth
+namespace BaitaHora.Application.DTOs.Auth.Requests
 {
     public sealed class LoginRequest
     {

@@ -1,4 +1,4 @@
-namespace BaitaHora.Application.DTOs.Responses
+namespace BaitaHora.Application.DTOs.Users.Responses
 {
     public sealed record UserResponse
     {

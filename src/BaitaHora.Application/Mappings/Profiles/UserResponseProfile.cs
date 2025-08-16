@@ -1,5 +1,6 @@
 using AutoMapper;
 using BaitaHora.Application.DTOs.Responses;
+using BaitaHora.Application.DTOs.Users.Responses;
 using BaitaHora.Domain.Entities.Commons.ValueObjects;
 using BaitaHora.Domain.Entities.Users;
 

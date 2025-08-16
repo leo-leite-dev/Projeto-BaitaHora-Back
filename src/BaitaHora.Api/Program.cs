@@ -1,24 +1,40 @@
 using System.Text;
 using System.Security.Claims;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using BaitaHora.Configurations.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using BaitaHora.Infrastructure.Data;
-using BaitaHora.Application.Validators.Scheduling;
-using FluentValidation.AspNetCore;
-using FluentValidation;
+using BaitaHora.Application.DTOs.Auth.Commands;
+using BaitaHora.Configurations.Infrastructure;
+using BaitaHora.Configurations.Application;
+using BaitaHora.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
+using BaitaHora.Domain.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ===== Controllers + FluentValidation =====
 builder.Services.AddControllers();
 
+// Integração automática do FluentValidation com ASP.NET Core
 builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssembly(typeof(CreateAppointmentRequestValidator).Assembly);
-
+builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+builder.Services.AddScoped<ICompanyContextResolver, CompanyContextResolver>();
+builder.Services.AddScoped<IAuthorizationHandler, CompanyRoleHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("OwnerOrManagerOfCompany",
+        policy => policy.Requirements.Add(new CompanyRoleRequirement(CompanyRole.Manager)));
+});
+
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(RegisterOwnerWithCompanyCommand).Assembly));
+
 
 // ===== JWT =====
 var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -26,7 +42,8 @@ var jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key a
 var jwtIssuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer ausente.");
 var jwtAudience = jwtSection["Audience"] ?? throw new InvalidOperationException("Jwt:Audience ausente.");
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
         opt.TokenValidationParameters = new TokenValidationParameters
@@ -41,6 +58,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             NameClaimType = ClaimTypes.Name,
             RoleClaimType = ClaimTypes.Role
         };
+
+        // ler token do cookie "jwtToken"
         opt.Events = new JwtBearerEvents
         {
             OnMessageReceived = ctx =>
@@ -71,7 +90,11 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
+            new OpenApiSecurityScheme {
+                Reference = new OpenApiReference {
+                    Type = ReferenceType.SecurityScheme, Id = "Bearer"
+                }
+            },
             Array.Empty<string>()
         }
     });
@@ -89,6 +112,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// ===== Migração automática (opcional) =====
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -103,7 +127,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
 

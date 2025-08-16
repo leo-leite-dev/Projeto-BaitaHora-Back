@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.*" />
+    <PackageReference Include="MediatR" Version="13.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -20,7 +21,8 @@
   <ItemGroup>
     <ProjectReference Include="..\BaitaHora.Application\BaitaHora.Application.csproj" />
     <ProjectReference Include="..\BaitaHora.Infrastructure\BaitaHora.Infrastructure.csproj" />
-    <ProjectReference Include="..\BaitaHora.Integrations.WhatsApp\BaitaHora.Integrations.WhatsApp.csproj" />
+    <ProjectReference
+      Include="..\BaitaHora.Integrations.WhatsApp\BaitaHora.Integrations.WhatsApp.csproj" />
     <ProjectReference Include="..\BaitaHora.Shared\BaitaHora.Shared.csproj" />
   </ItemGroup>
 

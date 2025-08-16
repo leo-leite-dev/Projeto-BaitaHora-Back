@@ -1,15 +1,13 @@
 using AutoMapper;
 using BaitaHora.Application.DTOs.Auth.Commands;
-using BaitaHora.Application.DTOs.Commands.Auth;
-using BaitaHora.Application.DTOs.Requests.Auth;
-using BaitaHora.Application.DTOs.Responses;
+using BaitaHora.Application.DTOs.Users.Responses;
 using BaitaHora.Application.IRepositories;
 using BaitaHora.Application.IServices.Auth;
-using BaitaHora.Application.IServices.Auths;
 using BaitaHora.Application.IServices.Companies;
 using BaitaHora.Application.IServices.Scheduling;
 using BaitaHora.Application.IServices.Users;
 using BaitaHora.Domain.Commons;
+using BaitaHora.Domain.Entities.Companies;
 using BaitaHora.Domain.Entities.Users;
 using BaitaHora.Domain.Enums;
 using BaitaHora.Domain.Exceptions;
@@ -61,23 +59,24 @@ namespace BaitaHora.Application.Services.Auths
         {
             try
             {
-                var emailNorm = NormalizeEmail(cmd.User.Email!.Trim());
-                var username = NormalizeUsernameRequired(cmd.User.Username!.Trim());
+                var emailNorm = NormalizeEmail(cmd.User.Email.Trim());
+                var username = NormalizeUsernameRequired(cmd.User.Username.Trim());
+                var docClean = string.IsNullOrWhiteSpace(cmd.Company.Document)
+                    ? null
+                    : NormalizeDocument(cmd.Company.Document);
 
                 await EnsureUsernameAvailableAsync(username, ct);
                 await EnsureEmailAvailableAsync(emailNorm, ct);
 
-                if (string.IsNullOrWhiteSpace(cmd.Company.Name))
-                    return Result<UserResponse>.Failure("Nome da empresa é obrigatório.");
-
-                if (!string.IsNullOrWhiteSpace(cmd.Company.Document) &&
-                    await _companyRepository.ExistsByDocumentAsync(cmd.Company.Document, ct))
-                    return Result<UserResponse>.Failure("Documento da empresa já está em uso.");
+                if (!string.IsNullOrWhiteSpace(docClean) &&
+                    await _companyRepository.ExistsByDocumentAsync(docClean, ct))
+                    return Result<UserResponse>.Conflict("Documento da empresa já está em uso.");
 
                 if (await _companyRepository.ExistsByNameAsync(cmd.Company.Name, ct))
-                    return Result<UserResponse>.Failure("Nome da empresa já está em uso.");
+                    return Result<UserResponse>.Conflict("Nome da empresa já está em uso.");
 
                 User user = null!;
+                Company company = null!;
 
                 await ExecuteInTransactionAsync(async () =>
                 {
@@ -88,10 +87,10 @@ namespace BaitaHora.Application.Services.Auths
                         rawPassword: cmd.User.Password,
                         username: username,
                         profile: profile,
-                        ct: ct
-                    );
+                        ct: ct);
 
-                    var company = await _companyService.CreateCompanyAsync(cmd.Company, ct);
+                    var createCompanyCmd = cmd.Company with { Document = docClean };
+                    company = await _companyService.CreateCompanyAsync(createCompanyCmd, ct);
 
                     await _companyMemberService.AddMemberAsync(
                         companyId: company.Id,
@@ -99,28 +98,27 @@ namespace BaitaHora.Application.Services.Auths
                         userId: user.Id,
                         role: CompanyRole.Owner,
                         isActive: true,
-                        ct: ct
-                    );
+                        ct: ct);
 
                     await _scheduleService.EnsureScheduleAsync(user.Id, company.Id, ct);
                 });
 
                 var response = _mapper.Map<UserResponse>(user);
-                return Result<UserResponse>.Success(response);
+                return Result<UserResponse>.Created(response);
             }
             catch (UserException ex)
             {
                 _logger.LogWarning(ex, "Erro de domínio ao registrar owner {Email}", cmd.User.Email);
-                return Result<UserResponse>.Failure(ex.Message);
+                return Result<UserResponse>.BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro inesperado ao registrar owner {Email}", cmd.User.Email);
-                return Result<UserResponse>.Failure("Erro interno ao registrar admin e empresa.");
+                return Result<UserResponse>.ServerError("Erro interno ao registrar admin e empresa.");
             }
         }
 
-        public async Task<Result<UserResponse>> RegisterEmployeeAsync(RegisterEmployeeCommand cmd, Guid actorUserId, CancellationToken ct = default)
+        public async Task<Result<UserResponse>> RegisterEmployeeAsync(RegisterEmployeeCommand cmd, CancellationToken ct = default)
         {
             try
             {
@@ -148,48 +146,59 @@ namespace BaitaHora.Application.Services.Auths
 
                     await _companyMemberService.AddMemberAsync(
                         companyId: cmd.CompanyId,
-                        requesterUserId: actorUserId,
+                        requesterUserId: cmd.ActorUserId,
                         userId: user.Id,
                         role: cmd.Role,
                         isActive: true,
-                        ct: ct
-                    );
+                        ct: ct);
 
                     await _scheduleService.EnsureScheduleAsync(user.Id, cmd.CompanyId, ct);
                 });
 
                 var response = _mapper.Map<UserResponse>(user);
-                return Result<UserResponse>.Success(response);
+                return Result<UserResponse>.Created(response);
             }
             catch (UserException ex)
             {
                 _logger.LogWarning(ex, "Erro de validação ao registrar funcionário {Email}", cmd.User.Email);
-                return Result<UserResponse>.Failure(ex.Message);
+                return Result<UserResponse>.BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro inesperado ao registrar funcionário {Email}", cmd.User.Email);
-                return Result<UserResponse>.Failure("Erro interno ao registrar usuário.");
+                return Result<UserResponse>.ServerError("Erro interno ao registrar usuário.");
             }
         }
 
-        public async Task<Result<string>> AuthenticateAsync(LoginRequest request, CancellationToken ct)
+        public async Task<Result<string>> AuthenticateAsync(AuthenticateCommand cmd, CancellationToken ct)
         {
             try
             {
-                var user = IsEmail(request.Identifier)
-                    ? await _userRepository.GetByEmailAsync(request.Identifier)
-                    : await _userRepository.GetByUsernameAsync(request.Identifier);
+                var identifier = cmd.UsernameOrEmail?.Trim();
+                if (string.IsNullOrWhiteSpace(identifier) || string.IsNullOrWhiteSpace(cmd.Password))
+                    return Result<string>.Failure("Credenciais inválidas.");
 
-                if (user is null || !_passwordManager.Verify(request.Password, user.PasswordHash))
+                var isEmail = identifier.Contains('@');
+                var user = isEmail
+                    ? await _userRepository.GetByEmailAsync(identifier, ct)
+                    : await _userRepository.GetByUsernameAsync(identifier, ct);
+
+                if (user is null)
                     return Result<string>.Failure("Usuário ou senha inválidos.");
+
+                if (!_passwordManager.Verify(cmd.Password, user.PasswordHash))
+                    return Result<string>.Failure("Usuário ou senha inválidos.");
+
+                if (!user.IsActive) return Result<string>.Failure("Usuário inativo.");
 
                 var token = _tokenService.GenerateToken(user);
                 return Result<string>.Success(token);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro inesperado ao autenticar usuário com identificador {Identifier}", request.Identifier);
+                _logger.LogError(ex,
+                    "Erro inesperado ao autenticar usuário com identificador {Identifier}",
+                    cmd.UsernameOrEmail);
                 return Result<string>.Failure("Erro interno ao autenticar usuário.");
             }
         }
@@ -203,6 +212,11 @@ namespace BaitaHora.Application.Services.Auths
 
         private static string NormalizeEmail(string emailRaw)
             => emailRaw.Trim().ToLowerInvariant();
+
+        private static string NormalizeDocument(string document)
+        {
+            return new string(document.Where(char.IsDigit).ToArray());
+        }
 
         private async Task EnsureUsernameAvailableAsync(string username, CancellationToken ct)
         {

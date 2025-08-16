@@ -1,11 +1,14 @@
 using BaitaHora.Api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace BaitaHora.Api.Helpers
 {
     public static class ApiResponseHelper
     {
-        private static readonly ILogger _logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger("ApiResponseHelper");
+        private static readonly ILogger _logger =
+            LoggerFactory.Create(builder => builder.AddConsole())
+                         .CreateLogger("ApiResponseHelper");
 
         public static ApiResponse<string> CreateSuccess(string message)
         {
@@ -36,7 +39,9 @@ namespace BaitaHora.Api.Helpers
 
         public static IActionResult CreateError(string message, string? detail = null, int statusCode = 500)
         {
-            _logger.LogError("Erro: {Message}, Detalhes: {Detail}, Status Code: {StatusCode}", message, detail, statusCode);
+            _logger.LogError("Erro: {Message}, Detalhes: {Detail}, Status Code: {StatusCode}",
+                message, detail, statusCode);
+
             var errorResponse = new ApiErrorResponse
             {
                 Success = false,

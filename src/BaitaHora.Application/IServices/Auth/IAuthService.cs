@@ -1,16 +1,13 @@
-using BaitaHora.Application.DTOs.Auth.Commands;
-using BaitaHora.Application.DTOs.Commands.Auth;
-using BaitaHora.Application.DTOs.Requests.Auth;
-using BaitaHora.Application.DTOs.Responses;
 using BaitaHora.Domain.Commons;
+using BaitaHora.Application.DTOs.Auth.Commands;
+using BaitaHora.Application.DTOs.Users.Responses;
 
-namespace BaitaHora.Application.IServices.Auths
+namespace BaitaHora.Application.IServices.Auth
 {
     public interface IAuthService
     {
         Task<Result<UserResponse>> RegisterOwnerWithCompanyAsync(RegisterOwnerWithCompanyCommand cmd, CancellationToken ct = default);
-        Task<Result<UserResponse>> RegisterEmployeeAsync(RegisterEmployeeCommand cmd, Guid actorUserId, CancellationToken ct = default);
-        Task<Result<string>> AuthenticateAsync(LoginRequest request, CancellationToken ct = default);
+        Task<Result<UserResponse>> RegisterEmployeeAsync(RegisterEmployeeCommand cmd, CancellationToken ct = default);
+        Task<Result<string>> AuthenticateAsync(AuthenticateCommand cmd, CancellationToken ct = default);
     }
-
 }

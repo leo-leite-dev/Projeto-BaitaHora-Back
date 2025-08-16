@@ -63,7 +63,7 @@ namespace BaitaHora.Domain.Entities.Companies
                 ? Role
                 : Rank(PrimaryPosition.AccessLevel) > Rank(Role) ? PrimaryPosition.AccessLevel : Role;
 
-        private static int Rank(CompanyRole r) => r switch
+        public static int Rank(CompanyRole r) => r switch
         {
             CompanyRole.Owner => 4,
             CompanyRole.Manager => 3,

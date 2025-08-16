@@ -1,6 +1,7 @@
+using BaitaHora.Application.DTOs.Requests;
 using BaitaHora.Domain.Enums;
 
-namespace BaitaHora.Application.DTOs.Requests.Auth
+namespace BaitaHora.Application.DTOs.Auth.Requests
 {
     public sealed class RegisterEmployeeRequest
     {

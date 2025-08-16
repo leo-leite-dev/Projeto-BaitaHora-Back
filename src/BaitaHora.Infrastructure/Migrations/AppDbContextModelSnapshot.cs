@@ -22,62 +22,7 @@ namespace BaitaHora.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.Appointment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("CustomerDisplayName")
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
-                    b.Property<Guid?>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CustomerPhone")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<DateTime>("EndsAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
-
-                    b.Property<Guid>("ScheduleId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ServiceId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("StartsAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
-
-                    b.HasIndex("ServiceId");
-
-                    b.HasIndex("Status");
-
-                    b.HasIndex("ScheduleId", "StartsAtUtc");
-
-                    b.ToTable("appointments", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_appointments_time_range", "\"EndsAtUtc\" > \"StartsAtUtc\"");
-                        });
-                });
-
-            modelBuilder.Entity("BaitaHora.Domain.Entities.Company", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.Company", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -101,6 +46,9 @@ namespace BaitaHora.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Document")
@@ -112,47 +60,7 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.ToTable("Companies", (string)null);
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.CompanyCustomerProfessional", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CompanyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsPrimary")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("ProfessionalUserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
-
-                    b.HasIndex("ProfessionalUserId");
-
-                    b.HasIndex("CompanyId", "CustomerId", "IsPrimary");
-
-                    b.HasIndex("CompanyId", "CustomerId", "ProfessionalUserId")
-                        .IsUnique();
-
-                    b.ToTable("company_customer_professionals", (string)null);
-                });
-
-            modelBuilder.Entity("BaitaHora.Domain.Entities.CompanyImage", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.CompanyImage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -177,12 +85,18 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.ToTable("CompanyImages", (string)null);
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.CompanyMember", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.CompanyMember", b =>
                 {
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
@@ -199,6 +113,9 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("CompanyId", "UserId");
 
                     b.HasIndex("PrimaryPositionId");
@@ -210,7 +127,7 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.ToTable("CompanyMembers", (string)null);
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.CompanyPosition", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.CompanyPosition", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -222,6 +139,9 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -232,6 +152,9 @@ namespace BaitaHora.Infrastructure.Migrations
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
 
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
@@ -239,38 +162,7 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.ToTable("CompanyPositions", (string)null);
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.Customer", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
-                    b.Property<string>("PhoneE164")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PhoneE164")
-                        .IsUnique();
-
-                    b.ToTable("customers", (string)null);
-                });
-
-            modelBuilder.Entity("BaitaHora.Domain.Entities.Customers.CompanyCustomer", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.Customers.CompanyCustomer", b =>
                 {
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
@@ -308,7 +200,151 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.ToTable("company_customers", (string)null);
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.Schedule", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.Customers.CompanyCustomerProfessional", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProfessionalUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ProfessionalUserId");
+
+                    b.HasIndex("CompanyId", "CustomerId", "IsPrimary");
+
+                    b.HasIndex("CompanyId", "CustomerId", "ProfessionalUserId")
+                        .IsUnique();
+
+                    b.ToTable("company_customer_professionals", (string)null);
+                });
+
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.Customers.Customer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("PhoneE164")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PhoneE164")
+                        .IsUnique();
+
+                    b.ToTable("customers", (string)null);
+                });
+
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Scheduling.Appointment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CancellationReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CustomerDisplayName")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("EndsAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid>("ScheduleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ServiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("StartsAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ServiceId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("ScheduleId", "StartsAtUtc");
+
+                    b.ToTable("appointments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_appointments_time_range", "\"EndsAtUtc\" > \"StartsAtUtc\"");
+                        });
+                });
+
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Scheduling.Schedule", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -325,6 +361,9 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -338,7 +377,7 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.ToTable("schedules", (string)null);
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.ServiceCatalogItem", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Scheduling.ServiceCatalogItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -346,6 +385,9 @@ namespace BaitaHora.Infrastructure.Migrations
 
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("DurationMinutes")
                         .HasColumnType("integer");
@@ -362,6 +404,9 @@ namespace BaitaHora.Infrastructure.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
 
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId", "Name")
@@ -370,7 +415,7 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.ToTable("service_catalog_items", (string)null);
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.User", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -407,7 +452,11 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Username")
+                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
@@ -419,7 +468,7 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.UserProfile", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Users.UserProfile", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -434,7 +483,7 @@ namespace BaitaHora.Infrastructure.Migrations
                         .HasColumnType("character varying(14)");
 
                     b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -453,32 +502,17 @@ namespace BaitaHora.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp without time zone");
+
                     b.HasKey("Id");
 
                     b.ToTable("UserProfiles", (string)null);
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.Appointment", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.Company", b =>
                 {
-                    b.HasOne("BaitaHora.Domain.Entities.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("BaitaHora.Domain.Entities.Schedule", "Schedule")
-                        .WithMany("Appointments")
-                        .HasForeignKey("ScheduleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("Schedule");
-                });
-
-            modelBuilder.Entity("BaitaHora.Domain.Entities.Company", b =>
-                {
-                    b.OwnsOne("BaitaHora.Domain.Entities.Users.Address", "Address", b1 =>
+                    b.OwnsOne("BaitaHora.Domain.Entities.Commons.ValueObjects.Address", "Address", b1 =>
                         {
                             b1.Property<Guid>("CompanyId")
                                 .HasColumnType("uuid");
@@ -537,57 +571,30 @@ namespace BaitaHora.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.CompanyCustomerProfessional", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.CompanyImage", b =>
                 {
-                    b.HasOne("BaitaHora.Domain.Entities.Company", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BaitaHora.Domain.Entities.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BaitaHora.Domain.Entities.User", "ProfessionalUser")
-                        .WithMany()
-                        .HasForeignKey("ProfessionalUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("ProfessionalUser");
-                });
-
-            modelBuilder.Entity("BaitaHora.Domain.Entities.CompanyImage", b =>
-                {
-                    b.HasOne("BaitaHora.Domain.Entities.Company", "Company")
+                    b.HasOne("BaitaHora.Domain.Entities.Companies.Company", "Company")
                         .WithOne("Image")
-                        .HasForeignKey("BaitaHora.Domain.Entities.CompanyImage", "CompanyId")
+                        .HasForeignKey("BaitaHora.Domain.Entities.Companies.CompanyImage", "CompanyId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Company");
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.CompanyMember", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.CompanyMember", b =>
                 {
-                    b.HasOne("BaitaHora.Domain.Entities.Company", "Company")
+                    b.HasOne("BaitaHora.Domain.Entities.Companies.Company", "Company")
                         .WithMany("Members")
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BaitaHora.Domain.Entities.CompanyPosition", "PrimaryPosition")
+                    b.HasOne("BaitaHora.Domain.Entities.Companies.CompanyPosition", "PrimaryPosition")
                         .WithMany()
                         .HasForeignKey("PrimaryPositionId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("BaitaHora.Domain.Entities.User", "User")
+                    b.HasOne("BaitaHora.Domain.Entities.Users.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -600,9 +607,9 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.CompanyPosition", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.CompanyPosition", b =>
                 {
-                    b.HasOne("BaitaHora.Domain.Entities.Company", "Company")
+                    b.HasOne("BaitaHora.Domain.Entities.Companies.Company", "Company")
                         .WithMany("Positions")
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -611,15 +618,15 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.Navigation("Company");
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.Customers.CompanyCustomer", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.Customers.CompanyCustomer", b =>
                 {
-                    b.HasOne("BaitaHora.Domain.Entities.Company", "Company")
+                    b.HasOne("BaitaHora.Domain.Entities.Companies.Company", "Company")
                         .WithMany()
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BaitaHora.Domain.Entities.Customer", "Customer")
+                    b.HasOne("BaitaHora.Domain.Entities.Companies.Customers.Customer", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -630,15 +637,60 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.Navigation("Customer");
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.Schedule", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.Customers.CompanyCustomerProfessional", b =>
                 {
-                    b.HasOne("BaitaHora.Domain.Entities.Company", "Company")
+                    b.HasOne("BaitaHora.Domain.Entities.Companies.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BaitaHora.Domain.Entities.Companies.Customers.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BaitaHora.Domain.Entities.Users.User", "ProfessionalUser")
+                        .WithMany()
+                        .HasForeignKey("ProfessionalUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("ProfessionalUser");
+                });
+
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Scheduling.Appointment", b =>
+                {
+                    b.HasOne("BaitaHora.Domain.Entities.Companies.Customers.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("BaitaHora.Domain.Entities.Scheduling.Schedule", "Schedule")
+                        .WithMany("Appointments")
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Schedule");
+                });
+
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Scheduling.Schedule", b =>
+                {
+                    b.HasOne("BaitaHora.Domain.Entities.Companies.Company", "Company")
                         .WithMany()
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BaitaHora.Domain.Entities.User", "User")
+                    b.HasOne("BaitaHora.Domain.Entities.Users.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -649,29 +701,29 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.ServiceCatalogItem", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Scheduling.ServiceCatalogItem", b =>
                 {
-                    b.HasOne("BaitaHora.Domain.Entities.Company", null)
+                    b.HasOne("BaitaHora.Domain.Entities.Companies.Company", null)
                         .WithMany()
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.User", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Users.User", b =>
                 {
-                    b.HasOne("BaitaHora.Domain.Entities.UserProfile", "Profile")
+                    b.HasOne("BaitaHora.Domain.Entities.Users.UserProfile", "Profile")
                         .WithOne()
-                        .HasForeignKey("BaitaHora.Domain.Entities.User", "ProfileId")
+                        .HasForeignKey("BaitaHora.Domain.Entities.Users.User", "ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Profile");
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.UserProfile", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Users.UserProfile", b =>
                 {
-                    b.OwnsOne("BaitaHora.Domain.Entities.Users.Address", "Address", b1 =>
+                    b.OwnsOne("BaitaHora.Domain.Entities.Commons.ValueObjects.Address", "Address", b1 =>
                         {
                             b1.Property<Guid>("UserProfileId")
                                 .HasColumnType("uuid");
@@ -723,7 +775,7 @@ namespace BaitaHora.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.Company", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Companies.Company", b =>
                 {
                     b.Navigation("Image");
 
@@ -732,7 +784,7 @@ namespace BaitaHora.Infrastructure.Migrations
                     b.Navigation("Positions");
                 });
 
-            modelBuilder.Entity("BaitaHora.Domain.Entities.Schedule", b =>
+            modelBuilder.Entity("BaitaHora.Domain.Entities.Scheduling.Schedule", b =>
                 {
                     b.Navigation("Appointments");
                 });

@@ -1,4 +1,4 @@
-using BaitaHora.Domain.Entities;
+using BaitaHora.Domain.Entities.Scheduling;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

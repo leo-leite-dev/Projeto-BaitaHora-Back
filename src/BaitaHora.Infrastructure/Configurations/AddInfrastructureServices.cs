@@ -37,6 +37,7 @@ namespace BaitaHora.Configurations.Infrastructure
 
             // ===== AutoMapper Profiles =====
             services.AddAutoMapper(
+                typeof(AuthProfile).Assembly,
                 typeof(UserRequestProfile).Assembly,
                 typeof(CompanyProfile).Assembly,
                 typeof(UserResponseProfile).Assembly,
@@ -74,9 +75,10 @@ namespace BaitaHora.Configurations.Infrastructure
             services.AddScoped<ICompanyService, CompanyService>();
             services.AddScoped<ICompanyPermissionService, CompanyPermissionService>();
             services.AddScoped<ICompanyPositionService, CompanyPositionService>();
+            services.AddScoped<ICompanyMemberService, CompanyMemberService>();
 
             // Auth
-            services.AddScoped<IAccessService, AccessService>();   // <<--- ADICIONADO (resolve o erro atual)
+            services.AddScoped<IAccessService, AccessService>();
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ICookieService, CookieService>();

@@ -1,6 +1,6 @@
 namespace BaitaHora.Application.DTOs.Commands.Commons
 {
-    public sealed record AddressInput(
+    public sealed record AddressDto(
         string Street,
         string Number,
         string District,

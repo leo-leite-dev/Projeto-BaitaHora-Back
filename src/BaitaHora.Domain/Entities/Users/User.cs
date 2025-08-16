@@ -89,9 +89,6 @@ namespace BaitaHora.Domain.Entities.Users
 
         public void SetUsername(string newUsername, Func<string, bool> isUsernameTaken)
         {
-            if (string.IsNullOrWhiteSpace(newUsername))
-                throw new UserException("O nome de usuário não pode estar vazio.");
-
             newUsername = newUsername.Trim();
 
             if (newUsername.Contains(' '))
@@ -99,9 +96,6 @@ namespace BaitaHora.Domain.Entities.Users
 
             if (newUsername.Length < 4 || newUsername.Length > 20)
                 throw new UserException("O nome de usuário deve ter entre 4 e 20 caracteres.");
-
-            if (isUsernameTaken.Invoke(newUsername))
-                throw new UserException("Este nome de usuário já está em uso.");
 
             Username = newUsername;
             UpdatedAt = DateTime.UtcNow;

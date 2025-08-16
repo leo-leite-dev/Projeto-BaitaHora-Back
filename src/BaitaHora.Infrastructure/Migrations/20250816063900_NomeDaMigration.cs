@@ -26,7 +26,8 @@ namespace BaitaHora.Infrastructure.Migrations
                     Address_City = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Address_State = table.Column<string>(type: "char(2)", maxLength: 2, nullable: false),
                     Address_ZipCode = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())")
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "timezone('utc', now())"),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -41,7 +42,8 @@ namespace BaitaHora.Infrastructure.Migrations
                     PhoneE164 = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Name = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -66,7 +68,8 @@ namespace BaitaHora.Infrastructure.Migrations
                     Address_State = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
                     Address_ZipCode = table.Column<string>(type: "character varying(9)", maxLength: 9, nullable: false),
                     ProfileImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -101,7 +104,9 @@ namespace BaitaHora.Infrastructure.Migrations
                     CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: false),
                     AccessLevel = table.Column<short>(type: "smallint", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -123,7 +128,9 @@ namespace BaitaHora.Infrastructure.Migrations
                     Name = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
                     DurationMinutes = table.Column<int>(type: "integer", nullable: false),
                     Price = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -170,7 +177,7 @@ namespace BaitaHora.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Username = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    Username = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
@@ -179,7 +186,8 @@ namespace BaitaHora.Infrastructure.Migrations
                     PasswordResetToken = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     PasswordResetTokenExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ProfileId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -202,7 +210,8 @@ namespace BaitaHora.Infrastructure.Migrations
                     ProfessionalUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     IsPrimary = table.Column<bool>(type: "boolean", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW() AT TIME ZONE 'UTC'")
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW() AT TIME ZONE 'UTC'"),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -236,7 +245,10 @@ namespace BaitaHora.Infrastructure.Migrations
                     Role = table.Column<int>(type: "integer", nullable: false),
                     PrimaryPositionId = table.Column<Guid>(type: "uuid", nullable: true),
                     JoinedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -269,7 +281,8 @@ namespace BaitaHora.Infrastructure.Migrations
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     CompanyId = table.Column<Guid>(type: "uuid", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW() AT TIME ZONE 'UTC'")
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW() AT TIME ZONE 'UTC'"),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -297,12 +310,16 @@ namespace BaitaHora.Infrastructure.Migrations
                     StartsAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndsAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
+                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
                     CustomerId = table.Column<Guid>(type: "uuid", nullable: true),
                     CustomerDisplayName = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
                     CustomerPhone = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: true),
                     ServiceId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    Notes = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true)
+                    Notes = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
+                    CancellationReason = table.Column<string>(type: "text", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {

@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using BaitaHora.Application.IRepositories;
-using BaitaHora.Domain.Entities;
+using BaitaHora.Domain.Entities.Users;
 using BaitaHora.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 

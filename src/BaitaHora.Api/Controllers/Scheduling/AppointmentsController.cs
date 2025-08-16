@@ -20,57 +20,57 @@ namespace BaitaHora.Api.Controllers.Scheduling
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        [HttpPost("schedules/{scheduleId:guid}/pending")]
-        [Authorize(Roles = "Owner,Manager,Staff")]
-        public async Task<IActionResult> CreatePending([FromRoute] Guid scheduleId, [FromBody] CreatePendingSlotRequest request, CancellationToken ct)
-        {
-            try
-            {
-                var result = await _appointmentService.CreatePendingSlotAsync(scheduleId, request, ct);
-                return Ok(ApiResponseHelper.CreateSuccess(result, "Slot pendente criado"));
-            }
-            catch (InvalidOperationException ioe) 
-            {
-                return ApiResponseHelper.CreateError("Conflito de horário", ioe.Message, 409);
-            }
-            catch (ArgumentException ae)
-            {
-                return ApiResponseHelper.CreateError("Requisição inválida", ae.Message, 400);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao criar slot pendente na agenda {ScheduleId}", scheduleId);
-                return ApiResponseHelper.CreateError("Erro no servidor", "Tente novamente mais tarde", 500);
-            }
-        }
+        // [HttpPost("schedules/{scheduleId:guid}/pending")]
+        // [Authorize(Roles = "Owner,Manager,Staff")]
+        // public async Task<IActionResult> CreatePending([FromRoute] Guid scheduleId, [FromBody] CreatePendingSlotRequest request, CancellationToken ct)
+        // {
+        //     try
+        //     {
+        //         var result = await _appointmentService.CreatePendingSlotAsync(scheduleId, request, ct);
+        //         return Ok(ApiResponseHelper.CreateSuccess(result, "Slot pendente criado"));
+        //     }
+        //     catch (InvalidOperationException ioe) 
+        //     {
+        //         return ApiResponseHelper.CreateError("Conflito de horário", ioe.Message, 409);
+        //     }
+        //     catch (ArgumentException ae)
+        //     {
+        //         return ApiResponseHelper.CreateError("Requisição inválida", ae.Message, 400);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Erro ao criar slot pendente na agenda {ScheduleId}", scheduleId);
+        //         return ApiResponseHelper.CreateError("Erro no servidor", "Tente novamente mais tarde", 500);
+        //     }
+        // }
 
-        [HttpPost]
-        [Authorize(Roles = "Owner,Manager,Staff,Chatbot")] 
-        public async Task<IActionResult> Create([FromBody] CreateAppointmentRequest request, CancellationToken ct)
-        {
-            try
-            {
-                var result = await _appointmentService.CreateAsync(request, ct);
-                return Ok(ApiResponseHelper.CreateSuccess(result, "Agendamento criado"));
-            }
-            catch (KeyNotFoundException knf)
-            {
-                return ApiResponseHelper.CreateError("Não encontrado", knf.Message, 404);
-            }
-            catch (InvalidOperationException ioe)
-            {
-                return ApiResponseHelper.CreateError("Conflito de horário", ioe.Message, 409);
-            }
-            catch (ArgumentException ae)
-            {
-                return ApiResponseHelper.CreateError("Requisição inválida", ae.Message, 400);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao criar agendamento");
-                return ApiResponseHelper.CreateError("Erro no servidor", "Tente novamente mais tarde", 500);
-            }
-        }
+        // [HttpPost]
+        // [Authorize(Roles = "Owner,Manager,Staff,Chatbot")] 
+        // public async Task<IActionResult> Create([FromBody] CreateAppointmentRequest request, CancellationToken ct)
+        // {
+        //     try
+        //     {
+        //         var result = await _appointmentService.CreateAsync(request, ct);
+        //         return Ok(ApiResponseHelper.CreateSuccess(result, "Agendamento criado"));
+        //     }
+        //     catch (KeyNotFoundException knf)
+        //     {
+        //         return ApiResponseHelper.CreateError("Não encontrado", knf.Message, 404);
+        //     }
+        //     catch (InvalidOperationException ioe)
+        //     {
+        //         return ApiResponseHelper.CreateError("Conflito de horário", ioe.Message, 409);
+        //     }
+        //     catch (ArgumentException ae)
+        //     {
+        //         return ApiResponseHelper.CreateError("Requisição inválida", ae.Message, 400);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Erro ao criar agendamento");
+        //         return ApiResponseHelper.CreateError("Erro no servidor", "Tente novamente mais tarde", 500);
+        //     }
+        // }
 
         [HttpPut("{appointmentId:guid}/assign-customer")]
         [Authorize(Roles = "Owner,Manager,Staff,Chatbot")]
@@ -92,29 +92,29 @@ namespace BaitaHora.Api.Controllers.Scheduling
             }
         }
 
-        [HttpPut("{appointmentId:guid}/status")]
-        [Authorize(Roles = "Owner,Manager,Staff")]
-        public async Task<IActionResult> UpdateStatus([FromRoute] Guid appointmentId, [FromBody] UpdateAppointmentStatusRequest request, CancellationToken ct)
-        {
-            try
-            {
-                await _appointmentService.UpdateStatusAsync(appointmentId, request.NewStatus, ct);
-                return NoContent();
-            }
-            catch (KeyNotFoundException knf)
-            {
-                return ApiResponseHelper.CreateError("Não encontrado", knf.Message, 404);
-            }
-            catch (ArgumentException ae)
-            {
-                return ApiResponseHelper.CreateError("Requisição inválida", ae.Message, 400);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao atualizar status do agendamento {AppointmentId}", appointmentId);
-                return ApiResponseHelper.CreateError("Erro no servidor", "Tente novamente mais tarde", 500);
-            }
-        }
+        // [HttpPut("{appointmentId:guid}/status")]
+        // [Authorize(Roles = "Owner,Manager,Staff")]
+        // public async Task<IActionResult> UpdateStatus([FromRoute] Guid appointmentId, [FromBody] UpdateAppointmentStatusRequest request, CancellationToken ct)
+        // {
+        //     try
+        //     {
+        //         await _appointmentService.UpdateStatusAsync(appointmentId, request.NewStatus, ct);
+        //         return NoContent();
+        //     }
+        //     catch (KeyNotFoundException knf)
+        //     {
+        //         return ApiResponseHelper.CreateError("Não encontrado", knf.Message, 404);
+        //     }
+        //     catch (ArgumentException ae)
+        //     {
+        //         return ApiResponseHelper.CreateError("Requisição inválida", ae.Message, 400);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Erro ao atualizar status do agendamento {AppointmentId}", appointmentId);
+        //         return ApiResponseHelper.CreateError("Erro no servidor", "Tente novamente mais tarde", 500);
+        //     }
+        // }
 
         [HttpPut("{appointmentId:guid}/reschedule")]
         [Authorize(Roles = "Owner,Manager,Staff")]

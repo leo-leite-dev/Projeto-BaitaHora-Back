@@ -8,7 +8,7 @@ namespace BaitaHora.Application.DTOs.Commands.Users
         string Rg,
         DateTime BirthDate,
         string Phone,
-        AddressInput Address,
+        AddressDto Address,
         string? ProfileImageUrl
     );
 }
