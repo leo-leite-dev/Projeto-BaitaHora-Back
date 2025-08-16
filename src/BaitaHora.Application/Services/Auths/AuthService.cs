@@ -1,16 +1,18 @@
 using AutoMapper;
+using BaitaHora.Application.DTOs.Auth.Commands;
+using BaitaHora.Application.DTOs.Commands.Auth;
 using BaitaHora.Application.DTOs.Requests.Auth;
 using BaitaHora.Application.DTOs.Responses;
 using BaitaHora.Application.IRepositories;
-using BaitaHora.Application.IServices;
 using BaitaHora.Application.IServices.Auth;
 using BaitaHora.Application.IServices.Auths;
+using BaitaHora.Application.IServices.Companies;
 using BaitaHora.Application.IServices.Scheduling;
+using BaitaHora.Application.IServices.Users;
 using BaitaHora.Domain.Commons;
-using BaitaHora.Domain.Entities;
+using BaitaHora.Domain.Entities.Users;
 using BaitaHora.Domain.Enums;
 using BaitaHora.Domain.Exceptions;
-using BaitaHora.Domain.Factories;
 using Microsoft.Extensions.Logging;
 
 namespace BaitaHora.Application.Services.Auths
@@ -19,10 +21,9 @@ namespace BaitaHora.Application.Services.Auths
     {
         private readonly IUserRepository _userRepository;
         private readonly ICompanyRepository _companyRepository;
-        private readonly ICompanyMemberRepository _companyMemberRepository;
+        private readonly ICompanyMemberService _companyMemberService;
         private readonly IPasswordManager _passwordManager;
         private readonly ITokenService _tokenService;
-        private readonly IAccessService _accessService;
         private readonly IScheduleService _scheduleService;
         private readonly ICompanyService _companyService;
         private readonly IUserService _userService;
@@ -33,10 +34,9 @@ namespace BaitaHora.Application.Services.Auths
         public AuthService(
             IUserRepository userRepository,
             ICompanyRepository companyRepository,
-            ICompanyMemberRepository companyMemberRepository,
+            ICompanyMemberService companyMemberService,
             IPasswordManager passwordManager,
             ITokenService tokenService,
-            IAccessService accessService,
             IScheduleService scheduleService,
             ICompanyService companyService,
             IUserService userService,
@@ -46,10 +46,9 @@ namespace BaitaHora.Application.Services.Auths
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _companyRepository = companyRepository ?? throw new ArgumentNullException(nameof(companyRepository));
-            _companyMemberRepository = companyMemberRepository ?? throw new ArgumentNullException(nameof(companyMemberRepository));
+            _companyMemberService = companyMemberService ?? throw new ArgumentNullException(nameof(companyMemberService));
             _passwordManager = passwordManager ?? throw new ArgumentNullException(nameof(passwordManager));
             _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
-            _accessService = accessService ?? throw new ArgumentNullException(nameof(accessService));
             _scheduleService = scheduleService ?? throw new ArgumentNullException(nameof(scheduleService));
             _companyService = companyService ?? throw new ArgumentNullException(nameof(companyService));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
@@ -58,119 +57,123 @@ namespace BaitaHora.Application.Services.Auths
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<Result<UserResponse>> RegisterOwnerWithCompanyAsync(RegisteOwnerRequest request, CancellationToken ct = default)
+        public async Task<Result<UserResponse>> RegisterOwnerWithCompanyAsync(RegisterOwnerWithCompanyCommand cmd, CancellationToken ct = default)
         {
-            var username = string.IsNullOrWhiteSpace(request.User.Username)
-                ? await GenerateUsernameIfEmptyAsync(null)
-                : request.User.Username!.Trim();
-
-            if (await _userRepository.ExistsByUsernameAsync(username, ct))
-                return Result<UserResponse>.Failure("Nome de usuário já está em uso.");
-
-            if (await _userRepository.ExistsByEmailAsync(request.User.Email, ct))
-                return Result<UserResponse>.Failure("E-mail já está em uso.");
-
-            if (string.IsNullOrWhiteSpace(request.Company.Name))
-                return Result<UserResponse>.Failure("Nome da empresa é obrigatório.");
-
-            // if (!string.IsNullOrWhiteSpace(request.Company.Document) &&
-            //     await _companyRepository.ExistsByDocumentAsync(request.Company.Document, ct))
-            //     return Result<UserResponse>.Failure("Documento da empresa já está em uso.");
-
-            if (await _companyRepository.ExistsByNameAsync(request.Company.Name, ct))
-                return Result<UserResponse>.Failure("Nome da empresa já está em uso.");
-
             try
             {
-                await _uow.BeginTransactionAsync();
+                var emailNorm = NormalizeEmail(cmd.User.Email!.Trim());
+                var username = NormalizeUsernameRequired(cmd.User.Username!.Trim());
 
-                var userProfile = _mapper.Map<UserProfile>(request.User);
-                var user = await _userService.CreateOwnerUserAsync(
-                    email: request.User.Email,
-                    rawPassword: request.User.Password,
-                    username: username,
-                    profile: userProfile,
-                    ct: ct);
+                await EnsureUsernameAvailableAsync(username, ct);
+                await EnsureEmailAvailableAsync(emailNorm, ct);
 
-                var company = await _companyService.CreateCompanyAsync(request.Company, ct);
+                if (string.IsNullOrWhiteSpace(cmd.Company.Name))
+                    return Result<UserResponse>.Failure("Nome da empresa é obrigatório.");
 
-                await _companyService.AddMemberAsync(company.Id, user.Id, CompanyRole.Owner, isActive: true, ct: ct);
+                if (!string.IsNullOrWhiteSpace(cmd.Company.Document) &&
+                    await _companyRepository.ExistsByDocumentAsync(cmd.Company.Document, ct))
+                    return Result<UserResponse>.Failure("Documento da empresa já está em uso.");
 
-                await _scheduleService.EnsureScheduleAsync(user.Id, company.Id, ct);
+                if (await _companyRepository.ExistsByNameAsync(cmd.Company.Name, ct))
+                    return Result<UserResponse>.Failure("Nome da empresa já está em uso.");
 
-                await _uow.CommitAsync();
+                User user = null!;
+
+                await ExecuteInTransactionAsync(async () =>
+                {
+                    var profile = _mapper.Map<UserProfile>(cmd.User.Profile);
+
+                    user = await _userService.CreateOwnerUserAsync(
+                        email: emailNorm,
+                        rawPassword: cmd.User.Password,
+                        username: username,
+                        profile: profile,
+                        ct: ct
+                    );
+
+                    var company = await _companyService.CreateCompanyAsync(cmd.Company, ct);
+
+                    await _companyMemberService.AddMemberAsync(
+                        companyId: company.Id,
+                        requesterUserId: user.Id,
+                        userId: user.Id,
+                        role: CompanyRole.Owner,
+                        isActive: true,
+                        ct: ct
+                    );
+
+                    await _scheduleService.EnsureScheduleAsync(user.Id, company.Id, ct);
+                });
 
                 var response = _mapper.Map<UserResponse>(user);
                 return Result<UserResponse>.Success(response);
             }
             catch (UserException ex)
             {
-                _logger.LogWarning(ex,
-                    "Erro de domínio ao bootstrap de empresa/owner {Email}", request.User.Email);
-                await _uow.RollbackAsync();
+                _logger.LogWarning(ex, "Erro de domínio ao registrar owner {Email}", cmd.User.Email);
                 return Result<UserResponse>.Failure(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex,
-                    "Erro inesperado ao bootstrap de empresa/owner {Email}", request.User.Email);
-                await _uow.RollbackAsync();
+                _logger.LogError(ex, "Erro inesperado ao registrar owner {Email}", cmd.User.Email);
                 return Result<UserResponse>.Failure("Erro interno ao registrar admin e empresa.");
             }
         }
 
-        public async Task<Result<UserResponse>> RegisterEmployeeAsync(RegisterEmployeeRequest request, Guid actorUserId)
+        public async Task<Result<UserResponse>> RegisterEmployeeAsync(RegisterEmployeeCommand cmd, Guid actorUserId, CancellationToken ct = default)
         {
-            if (request.CompanyId == Guid.Empty)
-                return Result<UserResponse>.Failure("Empresa inválida.");
-
-            if (!await _accessService.CanCreateUsersAsync(actorUserId, request.CompanyId))
-                return Result<UserResponse>.Failure("Você não tem permissão para cadastrar usuários nesta empresa.");
-
-            var username = string.IsNullOrWhiteSpace(request.User.Username)
-                ? await GenerateUsernameIfEmptyAsync(null)
-                : request.User.Username!.Trim();
-
-            if (await _userRepository.ExistsByUsernameAsync(username))
-                return Result<UserResponse>.Failure("Nome de usuário já está em uso.");
-
-            if (await _userRepository.ExistsByEmailAsync(request.User.Email))
-                return Result<UserResponse>.Failure("E-mail já está em uso.");
-
             try
             {
-                var profile = _mapper.Map<UserProfile>(request.User);
+                var emailNorm = NormalizeEmail(cmd.User.Email!.Trim());
+                var username = NormalizeUsernameRequired(cmd.User.Username!.Trim());
 
-                var user = UserFactory.Create(
-                    email: request.User.Email,
-                    rawPassword: request.User.Password,
-                    profile: profile,
-                    username: username,
-                    hashFunction: _passwordManager.Hash
-                );
-                await _userRepository.AddAsync(user);
+                await EnsureUsernameAvailableAsync(username, ct);
+                await EnsureEmailAvailableAsync(emailNorm, ct);
 
-                var member = new CompanyMember(request.CompanyId, user.Id, request.Role, joinedAt: DateTime.UtcNow, true);
-                await _companyMemberRepository.AddAsync(member);
+                User user = null!;
 
-                await _scheduleService.EnsureScheduleAsync(user.Id, request.CompanyId);
+                await ExecuteInTransactionAsync(async () =>
+                {
+                    var profile = _mapper.Map<UserProfile>(cmd.User.Profile);
+
+                    user = User.Create(
+                        email: emailNorm,
+                        rawPassword: cmd.User.Password,
+                        profile: profile,
+                        username: username,
+                        hashFunction: _passwordManager.Hash
+                    );
+
+                    await _userRepository.AddAsync(user, ct);
+
+                    await _companyMemberService.AddMemberAsync(
+                        companyId: cmd.CompanyId,
+                        requesterUserId: actorUserId,
+                        userId: user.Id,
+                        role: cmd.Role,
+                        isActive: true,
+                        ct: ct
+                    );
+
+                    await _scheduleService.EnsureScheduleAsync(user.Id, cmd.CompanyId, ct);
+                });
 
                 var response = _mapper.Map<UserResponse>(user);
                 return Result<UserResponse>.Success(response);
             }
             catch (UserException ex)
             {
-                _logger.LogWarning(ex, "Erro de validação ao registrar usuário {Email}", request.User.Email);
+                _logger.LogWarning(ex, "Erro de validação ao registrar funcionário {Email}", cmd.User.Email);
                 return Result<UserResponse>.Failure(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro inesperado ao registrar usuário {Email}", request.User.Email);
+                _logger.LogError(ex, "Erro inesperado ao registrar funcionário {Email}", cmd.User.Email);
                 return Result<UserResponse>.Failure("Erro interno ao registrar usuário.");
             }
         }
 
-        public async Task<Result<string>> AuthenticateAsync(LoginRequest request)
+        public async Task<Result<string>> AuthenticateAsync(LoginRequest request, CancellationToken ct)
         {
             try
             {
@@ -191,24 +194,43 @@ namespace BaitaHora.Application.Services.Auths
             }
         }
 
-        private async Task<string> GenerateUsernameIfEmptyAsync(string? username)
+        private static string NormalizeUsernameRequired(string? usernameRaw)
         {
-            if (!string.IsNullOrWhiteSpace(username))
-                return username.Trim();
+            if (string.IsNullOrWhiteSpace(usernameRaw))
+                throw new UserException("Nome de usuário é obrigatório.");
+            return usernameRaw.Trim();
+        }
 
-            int i = 1;
-            string generated;
-            do
+        private static string NormalizeEmail(string emailRaw)
+            => emailRaw.Trim().ToLowerInvariant();
+
+        private async Task EnsureUsernameAvailableAsync(string username, CancellationToken ct)
+        {
+            if (await _userRepository.ExistsByUsernameAsync(username, ct))
+                throw new UserException("Nome de usuário já está em uso.");
+        }
+
+        private async Task EnsureEmailAvailableAsync(string emailNorm, CancellationToken ct)
+        {
+            if (await _userRepository.ExistsByEmailAsync(emailNorm, ct))
+                throw new UserException("E-mail já está em uso.");
+        }
+
+        private async Task ExecuteInTransactionAsync(Func<Task> action)
+        {
+            await _uow.BeginTransactionAsync();
+            try
             {
-                generated = $"usuario{i++}";
-            } while (await _userRepository.ExistsByUsernameAsync(generated));
-
-            return generated;
+                await action();
+                await _uow.CommitAsync();
+            }
+            catch
+            {
+                await _uow.RollbackAsync();
+                throw;
+            }
         }
 
-        private bool IsEmail(string identifier)
-        {
-            return identifier.Contains('@');
-        }
+        private bool IsEmail(string identifier) => identifier.Contains('@');
     }
 }

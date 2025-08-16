@@ -1,4 +1,4 @@
-using BaitaHora.Domain.Entities;
+using BaitaHora.Domain.Entities.Companies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

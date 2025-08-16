@@ -6,14 +6,16 @@ namespace BaitaHora.Application.Services.Auths
 {
     public class AccessService : IAccessService
     {
-        private readonly ICompanyMemberRepository _memberRepo;
+        private readonly ICompanyMemberRepository _companyMemberRepository;
 
-        public AccessService(ICompanyMemberRepository memberRepo)
-            => _memberRepo = memberRepo;
+        public AccessService(ICompanyMemberRepository companyMemberRepository)
+        {
+            _companyMemberRepository = companyMemberRepository ?? throw new ArgumentNullException(nameof(companyMemberRepository));
+        }
 
         public async Task<bool> CanCreateUsersAsync(Guid actorUserId, Guid companyId)
         {
-            var member = await _memberRepo.GetAsync(companyId, actorUserId);
+            var member = await _companyMemberRepository.GetAsync(companyId, actorUserId);
             if (member is null) return false;
 
             return member.Role is CompanyRole.Owner or CompanyRole.Manager;

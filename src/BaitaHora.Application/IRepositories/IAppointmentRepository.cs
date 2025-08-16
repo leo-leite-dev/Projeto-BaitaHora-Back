@@ -1,4 +1,4 @@
-using BaitaHora.Domain.Entities;
+using BaitaHora.Domain.Entities.Scheduling;
 
 namespace BaitaHora.Application.IRepositories
 {

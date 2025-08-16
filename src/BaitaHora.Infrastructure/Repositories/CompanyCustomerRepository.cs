@@ -1,36 +1,39 @@
 using BaitaHora.Application.IRepositories;
-using BaitaHora.Domain.Entities;
-using BaitaHora.Domain.Entities.Customers;
+using BaitaHora.Domain.Entities.Companies.Customers;
 using BaitaHora.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace BaitaHora.Infrastructure.Repositories
 {
-    public sealed class CompanyCustomerRepository : GenericRepository<CompanyCustomer>, ICompanyCustomerRepository
+    public sealed class CompanyCustomerRepository : ICompanyCustomerRepository
     {
-        private readonly AppDbContext _ctx;
-        public CompanyCustomerRepository(AppDbContext ctx) : base(ctx) { _ctx = ctx; }
+        private readonly AppDbContext _context;
+        public CompanyCustomerRepository(AppDbContext context) => _context = context;
+
+        public Task AddAsync(CompanyCustomer e, CancellationToken ct = default)
+            => _context.Set<CompanyCustomer>().AddAsync(e, ct).AsTask();
+
+        public void Update(CompanyCustomer e, CancellationToken ct = default)
+            => _context.Set<CompanyCustomer>().Update(e);
 
         public Task<CompanyCustomer?> GetAsync(Guid companyId, Guid customerId, CancellationToken ct = default)
-            => _ctx.Set<CompanyCustomer>().AsNoTracking()
+            => _context.Set<CompanyCustomer>().AsNoTracking()
                 .FirstOrDefaultAsync(x => x.CompanyId == companyId && x.CustomerId == customerId, ct);
 
         public Task<bool> ExistsAsync(Guid companyId, Guid customerId, CancellationToken ct = default)
-            => _ctx.Set<CompanyCustomer>().AsNoTracking()
+            => _context.Set<CompanyCustomer>().AsNoTracking()
                 .AnyAsync(x => x.CompanyId == companyId && x.CustomerId == customerId, ct);
 
-        public Task<CompanyCustomer?> GetByCompanyAndPhoneAsync(Guid companyId, string phoneE164, CancellationToken ct = default)
-            => _ctx.Set<CompanyCustomer>().AsNoTracking()
-                .Join(_ctx.Set<User>(),
-                      cc => cc.CustomerId,
-                      u => u.Id,
-                      (cc, u) => new { cc, u })
-                .Join(_ctx.Set<UserProfile>(),
-                      x => x.u.ProfileId,
-                      up => up.Id,
-                      (x, up) => new { x.cc, up })
-                .Where(x => x.cc.CompanyId == companyId && x.up.Phone == phoneE164)
-                .Select(x => x.cc)
+        public Task<CompanyCustomer?> GetByCompanyAndPhoneAsync(
+            Guid companyId, string phoneE164, CancellationToken ct = default)
+        {
+            var norm = phoneE164.Trim();
+
+            return _context.Set<CompanyCustomer>()
+                .AsNoTracking()
+                .Where(cc => cc.CompanyId == companyId
+                          && cc.Customer.PhoneE164 == norm)
                 .FirstOrDefaultAsync(ct);
+        }
     }
 }

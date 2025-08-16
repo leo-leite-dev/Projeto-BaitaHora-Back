@@ -1,6 +1,6 @@
 using AutoMapper;
 using BaitaHora.Application.DTOs.Responses.Scheduling;
-using BaitaHora.Domain.Entities;
+using BaitaHora.Domain.Entities.Scheduling;
 
 namespace BaitaHora.Application.Mapping.Profiles
 {

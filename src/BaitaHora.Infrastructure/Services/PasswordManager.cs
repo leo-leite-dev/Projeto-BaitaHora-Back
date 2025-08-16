@@ -1,4 +1,4 @@
-using BaitaHora.Application.IServices;
+using BaitaHora.Application.IServices.Auth;
 
 namespace BaitaHora.Infrastructure.Services
 {

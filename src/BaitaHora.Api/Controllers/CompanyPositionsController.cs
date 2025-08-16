@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BaitaHora.Api.Helpers;
-using BaitaHora.Application.IServices;
 using BaitaHora.Application.DTOs.Requests.Company;
 using BaitaHora.Api.Extensions;
+using BaitaHora.Application.IServices.Companies;
 
 namespace BaitaHora.Api.Controllers
 {
@@ -12,14 +12,14 @@ namespace BaitaHora.Api.Controllers
     [Authorize]
     public sealed class CompanyPositionsController : ControllerBase
     {
-        private readonly ICompanyPositionService _positionsService;
+        private readonly ICompanyPositionService _companyPositionService;
         private readonly ILogger<CompanyPositionsController> _logger;
 
         public CompanyPositionsController(
-            ICompanyPositionService positionsService,
+            ICompanyPositionService companyPositionService,
             ILogger<CompanyPositionsController> logger)
         {
-            _positionsService = positionsService ?? throw new ArgumentNullException(nameof(positionsService));
+            _companyPositionService = companyPositionService ?? throw new ArgumentNullException(nameof(companyPositionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -38,7 +38,7 @@ namespace BaitaHora.Api.Controllers
 
             try
             {
-                var id = await _positionsService.CreateAsync(companyId, requesterId, body.Name, body.AccessLevel, ct);
+                var id = await _companyPositionService.CreateAsync(companyId, requesterId, body.Name, body.AccessLevel, ct);
                 return Ok(ApiResponseHelper.CreateSuccess(new { id }, "Cargo criado com sucesso."));
             }
             catch (UnauthorizedAccessException ex)

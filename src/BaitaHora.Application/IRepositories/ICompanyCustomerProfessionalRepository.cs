@@ -1,5 +1,4 @@
-
-using BaitaHora.Domain.Entities;
+using BaitaHora.Domain.Entities.Companies.Customers;
 
 namespace BaitaHora.Application.IRepositories
 {

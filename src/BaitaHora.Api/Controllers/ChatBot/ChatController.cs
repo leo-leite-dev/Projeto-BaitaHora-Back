@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using BaitaHora.Application.IServices.IChatbot;
 using BaitaHora.Application.IRepositories;
-using BaitaHora.Application.IServices; // <- adiciona a namespace das queries
+using BaitaHora.Application.IServices.Companies;
 
 namespace BaitaHora.Api.Controllers.Chatbot
 {
@@ -14,24 +14,23 @@ namespace BaitaHora.Api.Controllers.Chatbot
 
         private readonly IChatSessionStore _sessions;
         private readonly IChatbotQuickService _chat;
-        private readonly ICompanyMemberRepository _companyMembers;     // continua para validar proId
-        private readonly ICompanyPositionQueries _positionQueries;     // <- NOVO: queries de cargos
+        private readonly ICompanyMemberRepository _companyMembers;
+        private readonly ICompanyPositionQueries _positionQueries;
 
         public ChatController(
             IChatSessionStore sessions,
             IChatbotQuickService chat,
             ICompanyMemberRepository companyMembers,
-            ICompanyPositionQueries positionQueries) // <- injeta queries
+            ICompanyPositionQueries positionQueries) 
         {
             _sessions = sessions;
             _chat = chat;
             _companyMembers = companyMembers;
-            _positionQueries = positionQueries; // <- guarda queries
+            _positionQueries = positionQueries; 
         }
 
         private static string Norm(string? s) => (s ?? string.Empty).Trim().ToLowerInvariant();
 
-        // Agora busca papéis usando o serviço de query (e não mais members)
         private async Task<string[]> GetAvailableRolesAsync(Guid companyId, CancellationToken ct)
         {
             var roles = await _positionQueries.ListActiveNamesAsync(companyId, ct);
@@ -142,7 +141,7 @@ namespace BaitaHora.Api.Controllers.Chatbot
 
                         session.WeekStartUtc = DateTime.SpecifyKind(weekStartUtc, DateTimeKind.Utc);
 
-                        var appt = await _chat.BookForCustomerAsync(
+                        var appt = await _chat.BookForCustomerLegacyAsync(
                             session.CompanyId,
                             session.CustomerId!.Value,
                             session.WeekStartUtc.Value,

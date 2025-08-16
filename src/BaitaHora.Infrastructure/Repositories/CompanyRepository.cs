@@ -1,5 +1,5 @@
 using BaitaHora.Application.IRepositories;
-using BaitaHora.Domain.Entities;
+using BaitaHora.Domain.Entities.Companies;
 using BaitaHora.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,29 +7,27 @@ namespace BaitaHora.Infrastructure.Repositories
 {
     public class CompanyRepository : GenericRepository<Company>, ICompanyRepository
     {
-        private readonly AppDbContext _context;
-
-        public CompanyRepository(AppDbContext context) : base(context)
-        {
-            _context = context;
-        }
+        public CompanyRepository(AppDbContext context) : base(context) { }
 
         public Task<bool> ExistsByNameAsync(string name, CancellationToken ct = default)
         {
-            var norm = name.Trim().ToLower();
-            return _context.Companies.AnyAsync(c => c.Name.ToLower() == norm);
+            var norm = name.Trim();
+            return _context.Set<Company>()
+                           .AsNoTracking()
+                           .AnyAsync(c => EF.Functions.ILike(c.Name, norm), ct);
         }
 
-        public Task<bool> ExistsByDocumentAsync(string document)
+        public Task<bool> ExistsByDocumentAsync(string document, CancellationToken ct = default)
         {
             var norm = document.Trim();
-            return _context.Companies.AnyAsync(c => c.Document != null && c.Document == norm);
+            return _context.Set<Company>()
+                           .AsNoTracking()
+                           .AnyAsync(c => c.Document != null && c.Document == norm, ct);
         }
 
-        public async Task AddImageAsync(CompanyImage image)
+        public async Task AddImageAsync(CompanyImage image, CancellationToken ct = default)
         {
-            await _context.CompanyImages.AddAsync(image);
-            await _context.SaveChangesAsync();
+            await _context.Set<CompanyImage>().AddAsync(image, ct);
         }
     }
 }

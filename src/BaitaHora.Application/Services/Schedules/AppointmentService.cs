@@ -1,135 +1,143 @@
 using AutoMapper;
-using BaitaHora.Application.DTOs.Requests.Scheduling;
+using BaitaHora.Application.DTOs.Commands.Scheduling;
 using BaitaHora.Application.DTOs.Responses.Scheduling;
 using BaitaHora.Application.IRepositories;
 using BaitaHora.Application.IServices.Scheduling;
-using BaitaHora.Domain.Entities;
+using BaitaHora.Domain.Entities.Scheduling;
+using BaitaHora.Domain.Enums;
 
-namespace BaitaHora.Application.Services.Scheduling
+public sealed class AppointmentService : IAppointmentService
 {
-    public sealed class AppointmentService : IAppointmentService
+    private readonly IScheduleRepository _scheduleRepository;
+    private readonly IAppointmentRepository _appointmentRepository;
+    private readonly IServiceCatalogItemRepository _serviceCatalogItemRepository;
+    private readonly IMapper _mapper;
+
+    public AppointmentService(
+        IScheduleRepository scheduleRepository,
+        IAppointmentRepository appointmentRepository,
+        IServiceCatalogItemRepository serviceCatalogItemRepository,
+        IMapper mapper)
     {
-        private readonly IScheduleRepository _schedules;
-        private readonly IAppointmentRepository _appointments;
-        private readonly IServiceCatalogItemRepository _services;
-        private readonly IMapper _mapper;
+        _scheduleRepository = scheduleRepository ?? throw new ArgumentNullException(nameof(scheduleRepository));
+        _appointmentRepository = appointmentRepository ?? throw new ArgumentNullException(nameof(appointmentRepository));
+        _serviceCatalogItemRepository = serviceCatalogItemRepository ?? throw new ArgumentNullException(nameof(serviceCatalogItemRepository));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+    }
 
-        public AppointmentService(
-            IScheduleRepository schedules,
-            IAppointmentRepository appointments,
-            IServiceCatalogItemRepository services,
-            IMapper mapper)
+    public async Task<AppointmentResponse> CreatePendingSlotAsync(CreatePendingSlotCommand cmd, CancellationToken ct = default)
+    {
+        if (cmd.DurationMinutes <= 0) throw new ArgumentException("Duração inválida.");
+        if (cmd.ScheduleId == Guid.Empty) throw new ArgumentException("ScheduleId inválido.");
+
+        _ = await _scheduleRepository.GetByIdAsync(cmd.ScheduleId, ct)
+            ?? throw new KeyNotFoundException("Agenda não encontrada.");
+
+        var starts = cmd.StartsAtUtc;
+        var ends = starts.AddMinutes(cmd.DurationMinutes);
+
+        await EnsureNoConflict(cmd.ScheduleId, starts, ends, ignoreId: null, ct);
+
+        var appt = Appointment.CreatePendingSlot(
+            scheduleId: cmd.ScheduleId,
+            startsAtUtc: starts,
+            durationMinutes: cmd.DurationMinutes,
+            serviceId: cmd.ServiceId,
+            notes: cmd.Notes,
+            tentativeName: cmd.TentativeName,
+            tentativePhone: cmd.TentativePhone,
+            createdBy: AppointmentCreatedBy.Staff);
+
+        await _appointmentRepository.AddAsync(appt, ct);
+        return _mapper.Map<AppointmentResponse>(appt);
+    }
+
+    public async Task<AppointmentResponse> CreateAsync(CreateAppointmentCommand cmd, CancellationToken ct = default)
+    {
+        if (cmd.ScheduleId == Guid.Empty) throw new ArgumentException("ScheduleId inválido.");
+        if (cmd.EndsAtUtc <= cmd.StartsAtUtc)
+            throw new ArgumentException("Horário inválido (fim <= início).");
+
+        _ = await _scheduleRepository.GetByIdAsync(cmd.ScheduleId, ct)
+            ?? throw new KeyNotFoundException("Agenda não encontrada.");
+
+        if (cmd.ServiceId.HasValue)
         {
-            _schedules = schedules ?? throw new ArgumentNullException(nameof(schedules));
-            _appointments = appointments ?? throw new ArgumentNullException(nameof(appointments));
-            _services = services ?? throw new ArgumentNullException(nameof(services));
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _ = await _serviceCatalogItemRepository.GetByIdAsync(cmd.ServiceId.Value, ct)
+                ?? throw new KeyNotFoundException("Serviço não encontrado.");
         }
 
-        public async Task<AppointmentResponse> CreatePendingSlotAsync(Guid scheduleId, CreatePendingSlotRequest request, CancellationToken ct = default)
-        {
-            if (request.DurationMinutes <= 0) throw new ArgumentException("Duração inválida.");
+        await EnsureNoConflict(cmd.ScheduleId, cmd.StartsAtUtc, cmd.EndsAtUtc, ignoreId: null, ct);
 
-            var starts = request.StartsAtUtc;
-            var ends = starts.AddMinutes(request.DurationMinutes);
+        var appt = Appointment.CreateConfirmed(
+            scheduleId: cmd.ScheduleId,
+            startsAtUtc: cmd.StartsAtUtc,
+            endsAtUtc: cmd.EndsAtUtc,
+            createdBy: cmd.CreatedBy,
+            serviceId: cmd.ServiceId,
+            notes: cmd.Notes,
+            customerId: cmd.CustomerId,
+            customerDisplayName: cmd.CustomerDisplayName,
+            customerPhone: cmd.CustomerPhone
+        );
 
-            await EnsureNoConflict(scheduleId, starts, ends, null, ct);
+        await _appointmentRepository.AddAsync(appt, ct);
+        return _mapper.Map<AppointmentResponse>(appt);
+    }
 
-            var appt = new Appointment(scheduleId, starts, ends, AppointmentCreatedBy.Staff, request.ServiceId, request.Notes, request.TentativeName, request.TentativePhone);
+    public async Task AssignCustomerAsync(Guid appointmentId, Guid customerId, CancellationToken ct = default)
+    {
+        var appt = await _appointmentRepository.GetByIdAsync(appointmentId, ct)
+            ?? throw new KeyNotFoundException("Agendamento não encontrado.");
 
-            await _appointments.AddAsync(appt);
-            return _mapper.Map<AppointmentResponse>(appt);
-        }
+        appt.AssignCustomer(customerId);
+        await _appointmentRepository.UpdateAsync(appt, ct);
+    }
 
-        public async Task<AppointmentResponse> CreateAsync(CreateAppointmentRequest request, CancellationToken ct = default)
-        {
-            if (request.EndsAtUtc <= request.StartsAtUtc)
-                throw new ArgumentException("Horário inválido (fim <= início).");
+    public async Task ConfirmAsync(Guid appointmentId, CancellationToken ct = default)
+    {
+        var appt = await _appointmentRepository.GetByIdAsync(appointmentId, ct)
+            ?? throw new KeyNotFoundException("Agendamento não encontrado.");
 
-            _ = await _schedules.GetByIdAsync(request.ScheduleId)
-                ?? throw new KeyNotFoundException("Agenda não encontrada.");
+        appt.Confirm();
+        await _appointmentRepository.UpdateAsync(appt, ct);
+    }
 
-            if (request.ServiceId.HasValue)
-            {
-                _ = await _services.GetByIdAsync(request.ServiceId.Value)
-                    ?? throw new KeyNotFoundException("Serviço não encontrado.");
-            }
+    public async Task CompleteAsync(Guid appointmentId, CancellationToken ct = default)
+    {
+        var appt = await _appointmentRepository.GetByIdAsync(appointmentId, ct)
+            ?? throw new KeyNotFoundException("Agendamento não encontrado.");
 
-            await EnsureNoConflict(request.ScheduleId, request.StartsAtUtc, request.EndsAtUtc, null, ct);
+        appt.Complete();
+        await _appointmentRepository.UpdateAsync(appt, ct);
+    }
 
-            var createdBy = ParseCreatedBy(request.CreatedBy);
+    public async Task CancelAsync(Guid appointmentId, string? reason = null, CancellationToken ct = default)
+    {
+        var appt = await _appointmentRepository.GetByIdAsync(appointmentId, ct)
+            ?? throw new KeyNotFoundException("Agendamento não encontrado.");
 
-            var appt = new Appointment(request.ScheduleId, request.StartsAtUtc, request.EndsAtUtc, createdBy, request.ServiceId, request.Notes, request.CustomerDisplayName, request.CustomerPhone);
+        appt.Cancel(reason);
+        await _appointmentRepository.UpdateAsync(appt, ct);
+    }
 
-            if (request.CustomerId.HasValue)
-                appt.AssignCustomer(request.CustomerId.Value);
+    public async Task RescheduleAsync(Guid appointmentId, DateTime newStartsAtUtc, DateTime newEndsAtUtc, CancellationToken ct = default)
+    {
+        if (newEndsAtUtc <= newStartsAtUtc)
+            throw new ArgumentException("Horário inválido (fim <= início).");
 
-            await _appointments.AddAsync(appt);
-            return _mapper.Map<AppointmentResponse>(appt);
-        }
+        var appt = await _appointmentRepository.GetByIdAsync(appointmentId, ct)
+            ?? throw new KeyNotFoundException("Agendamento não encontrado.");
 
-        public async Task AssignCustomerAsync(Guid appointmentId, Guid customerId, CancellationToken ct = default)
-        {
-            var appt = await _appointments.GetByIdAsync(appointmentId) ?? throw new KeyNotFoundException("Agendamento não encontrado.");
-            appt.AssignCustomer(customerId);
-            await _appointments.UpdateAsync(appt);
-        }
+        await EnsureNoConflict(appt.ScheduleId, newStartsAtUtc, newEndsAtUtc, ignoreId: appt.Id, ct);
 
-        public async Task UpdateStatusAsync(Guid appointmentId, string newStatus, CancellationToken ct = default)
-        {
-            var appt = await _appointments.GetByIdAsync(appointmentId) ?? throw new KeyNotFoundException("Agendamento não encontrado.");
-            var status = ParseStatus(newStatus);
-            appt.UpdateStatus(status);
-            await _appointments.UpdateAsync(appt);
-        }
+        appt.Reschedule(newStartsAtUtc, newEndsAtUtc);
+        await _appointmentRepository.UpdateAsync(appt, ct);
+    }
 
-        public async Task RescheduleAsync(Guid appointmentId, DateTime newStartsAtUtc, DateTime newEndsAtUtc, CancellationToken ct = default)
-        {
-            if (newEndsAtUtc <= newStartsAtUtc)
-                throw new ArgumentException("Horário inválido (fim <= início).");
-
-            var appt = await _appointments.GetByIdAsync(appointmentId) ?? throw new KeyNotFoundException("Agendamento não encontrado.");
-
-            await EnsureNoConflict(appt.ScheduleId, newStartsAtUtc, newEndsAtUtc, appt.Id, ct);
-
-            appt.Reschedule(newStartsAtUtc, newEndsAtUtc);
-
-            await _appointments.UpdateAsync(appt);
-        }
-
-        public async Task CancelAsync(Guid appointmentId, string? reason = null, CancellationToken ct = default)
-        {
-            var appt = await _appointments.GetByIdAsync(appointmentId) ?? throw new KeyNotFoundException("Agendamento não encontrado.");
-
-            appt.UpdateStatus(AppointmentStatus.Cancelled);
-
-            if (!string.IsNullOrWhiteSpace(reason))
-            {
-                appt.UpdateNotes(
-                    string.IsNullOrWhiteSpace(appt.Notes)
-                        ? reason.Trim()
-                        : $"{appt.Notes}\nCancel reason: {reason.Trim()}");
-            }
-
-            await _appointments.UpdateAsync(appt);
-        }
-
-        private static AppointmentStatus ParseStatus(string input)
-        {
-            if (Enum.TryParse<AppointmentStatus>(input, true, out var status)) return status;
-            throw new ArgumentException($"Status inválido: {input}");
-        }
-
-        private static AppointmentCreatedBy ParseCreatedBy(string input)
-        {
-            if (Enum.TryParse<AppointmentCreatedBy>(input, true, out var createdBy)) return createdBy;
-            throw new ArgumentException($"CreatedBy inválido: {input}");
-        }
-
-        private async Task EnsureNoConflict(Guid scheduleId, DateTime startsAtUtc, DateTime endsAtUtc, Guid? ignoreId, CancellationToken ct)
-        {
-            if (await _appointments.HasConflictAsync(scheduleId, startsAtUtc, endsAtUtc, ignoreId, ct))
-                throw new InvalidOperationException("Conflito de horário na agenda.");
-        }
+    private async Task EnsureNoConflict(Guid scheduleId, DateTime startsAtUtc, DateTime endsAtUtc, Guid? ignoreId, CancellationToken ct)
+    {
+        if (await _appointmentRepository.HasConflictAsync(scheduleId, startsAtUtc, endsAtUtc, ignoreId, ct))
+            throw new InvalidOperationException("Conflito de horário na agenda.");
     }
 }

@@ -1,7 +1,6 @@
-// Application/Mapping/Profiles/UserResponseProfile.cs
 using AutoMapper;
 using BaitaHora.Application.DTOs.Responses;
-using BaitaHora.Domain.Entities;
+using BaitaHora.Domain.Entities.Commons.ValueObjects;
 using BaitaHora.Domain.Entities.Users;
 
 namespace BaitaHora.Application.Mapping.Profiles

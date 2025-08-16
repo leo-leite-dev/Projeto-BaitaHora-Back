@@ -9,17 +9,18 @@ using BaitaHora.Infrastructure.Services.Chat;
 
 using BaitaHora.Application.Mapping.Profiles;
 using BaitaHora.Application.IRepositories;
-using BaitaHora.Application.IServices;
 using BaitaHora.Application.IServices.Auth;
 using BaitaHora.Application.IServices.Auths;
 using BaitaHora.Application.IServices.IChatbot;
 using BaitaHora.Application.IServices.Scheduling;
-
-using BaitaHora.Application.Services;
 using BaitaHora.Application.Services.Auths;
 using BaitaHora.Application.Services.Chatbot;
-using BaitaHora.Application.Services.Permissions;
 using BaitaHora.Application.Services.Scheduling;
+using BaitaHora.Application.IServices.Users;
+using BaitaHora.Application.Services.Users;
+using BaitaHora.Application.IServices.Companies;
+using BaitaHora.Application.Services.Companies;
+using BaitaHora.Application.Services.Companies.Queries;
 
 namespace BaitaHora.Configurations.Infrastructure
 {

@@ -1,8 +1,8 @@
 using AutoMapper;
 using BaitaHora.Application.DTOs.Requests;
 using BaitaHora.Application.DTOs.Requests.Company; 
-using BaitaHora.Domain.Entities;                    
-using BaitaHora.Domain.Entities.Users;             
+using BaitaHora.Domain.Entities.Commons.ValueObjects;
+using BaitaHora.Domain.Entities.Companies;
 
 namespace BaitaHora.Application.Mapping.Profiles
 {
